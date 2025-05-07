@@ -42,7 +42,7 @@ object FacemodClient : ClientModInitializer {
 		cameraExecutor.submit {
 			webcamNames = try {
 				Webcam.getWebcams().map { it.name }
-			} catch (e: Exception) {
+			} catch (_: Exception) {
 				emptyList()
 			}
 			webcamsInitialized = true
@@ -104,7 +104,6 @@ object FacemodClient : ClientModInitializer {
 									closeCamera()
 
 									camera = Webcam.getWebcamByName(cameraName)
-                                    camera?.viewSize = Dimension(16 * 5, 9 * 5)
 									camera?.open(true)
 
 									if (camera?.isOpen == true) {
@@ -133,7 +132,7 @@ object FacemodClient : ClientModInitializer {
 				try {
 					camera?.let { cam ->
 						if (cam.isOpen) {
-							lastFrame = cam.image
+							lastFrame = resize(cam.image, 16 * 5, 9 * 5)
 						}
 					}
 					delay(50)
@@ -150,5 +149,13 @@ object FacemodClient : ClientModInitializer {
 		camera?.close()
 		camera = null
 		lastFrame = null
+	}
+
+	private fun resize(image: BufferedImage, width: Int, height: Int): BufferedImage {
+		val resized = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+		val g = resized.createGraphics()
+		g.drawImage(image, 0, 0, width, height, null)
+		g.dispose()
+		return resized
 	}
 }
