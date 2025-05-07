@@ -13,10 +13,13 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.command.CommandSource
+import net.minecraft.network.packet.c2s.common.CustomPayloadC2SPacket
 import net.minecraft.text.Text
 import java.awt.Dimension
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executors
@@ -33,6 +36,9 @@ object FacemodClient : ClientModInitializer {
 	private var cameraJob: Job? = null
 
 	override fun onInitializeClient() {
+		PayloadTypeRegistry.playC2S().register(FabricPluginMessage.CHANNEL_ID, FabricPluginMessage.CODEC);
+		PayloadTypeRegistry.playS2C().register(FabricPluginMessage.CHANNEL_ID, FabricPluginMessage.CODEC);
+
 		cameraExecutor.submit {
 			webcamNames = try {
 				Webcam.getWebcams().map { it.name }
@@ -42,7 +48,6 @@ object FacemodClient : ClientModInitializer {
 			webcamsInitialized = true
 		}
 
-		// Registrar para fechar os recursos quando o cliente fechar
 		ClientLifecycleEvents.CLIENT_STOPPING.register {
 			closeCamera()
 			cameraExecutor.shutdown()
@@ -50,22 +55,16 @@ object FacemodClient : ClientModInitializer {
 
 		ClientTickEvents.END_CLIENT_TICK.register {
 			if (!isOpen) return@register
-
 			val currentFrame = lastFrame ?: return@register
-
-			val path = Path.of("camera")
-			if (!Files.exists(path)) {
-				Files.createDirectories(path)
+			val bytes = ByteArrayOutputStream().use { baos ->
+				ImageIO.write(currentFrame, "png", baos)
+				baos.toByteArray()
 			}
 
-			val file = path.resolve("${System.currentTimeMillis()}.png")
-			try {
-				val outputStream = Files.newOutputStream(file)
-				ImageIO.write(currentFrame, "png", outputStream)
-				outputStream.close()
-			} catch (e: Exception) {
-				println("Erro ao salvar imagem: ${e.message}")
-			}
+			val packet = FabricPluginMessage(bytes)
+			it.player?.networkHandler?.sendPacket(
+				CustomPayloadC2SPacket(packet)
+			)
 		}
 
 		ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
@@ -105,7 +104,7 @@ object FacemodClient : ClientModInitializer {
 									closeCamera()
 
 									camera = Webcam.getWebcamByName(cameraName)
-                                    camera?.viewSize = Dimension(640, 480)
+                                    camera?.viewSize = Dimension(16 * 5, 9 * 5)
 									camera?.open(true)
 
 									if (camera?.isOpen == true) {
@@ -137,7 +136,7 @@ object FacemodClient : ClientModInitializer {
 							lastFrame = cam.image
 						}
 					}
-					delay(100) // Captura a cada 100ms
+					delay(50)
 				} catch (e: Exception) {
 					println("Erro na captura: ${e.message}")
 				}
