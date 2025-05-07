@@ -1,0 +1,4 @@
+name: FaceMod
+version: '1.0.0'
+main: dev.shiftsad.faceMod.FaceMod
+api-version: '1.21'
