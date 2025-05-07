@@ -1,18 +1,15 @@
-plugins {
-    kotlin("jvm") version "2.1.10"
+extra.apply {
+    set("kotlinVersion", "2.1.10")
+    set("shadowVersion", "8.3.0")
+    set("runPaperVersion", "2.3.1")
+    set("fabricLoomVersion", "1.7.1")
 }
 
-group = "codes.shiftmc"
-version = "1.0-SNAPSHOT"
+allprojects {
+    group = "codes.shiftmc"
+    version = "1.0-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-
-}
-
-kotlin {
-    jvmToolchain(21)
+    repositories {
+        mavenCentral()
+    }
 }

@@ -1,35 +1,48 @@
 {
-  "schemaVersion": 1,
-  "id": "facemod",
-  "version": "${version}",
-
-  "name": "FaceMod",
-  "description": "",
-  "authors": [],
-  "contact": {},
-
-  "license": "MIT",
-  "icon": "assets/facemod/icon.png",
-
-  "environment": "client",
-  "entrypoints": {
-    "fabric-datagen": ["dev.shiftsad.facemod.client.FacemodDataGenerator"],
-    "client": ["dev.shiftsad.facemod.client.FacemodClient"],
-    "main": ["dev.shiftsad.facemod.Facemod"]
-  },
-
-  "mixins": [
-    "facemod.mixins.json"
-    ,{
-      "config": "facemod.client.mixins.json",
-      "environment": "client"
-    }
-  ],
-
-  "depends": {
-    "fabricloader": ">=${loader_version}",
-    "fabric-language-kotlin": ">=${kotlin_loader_version}",
-    "fabric": "*",
-    "minecraft": "${minecraft_version}"
-  }
+	"schemaVersion": 1,
+	"id": "facemod",
+	"version": "${version}",
+	"name": "Facemod",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/facemod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "dev.shiftmc.Facemod",
+				"adapter": "kotlin"
+			}
+		],
+		"client": [
+			{
+				"value": "dev.shiftmc.FacemodClient",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		"facemod.mixins.json",
+		{
+			"config": "facemod.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.14",
+		"minecraft": "~1.21.5",
+		"java": ">=21",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
 }
