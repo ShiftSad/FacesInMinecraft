@@ -11,6 +11,8 @@ import org.bukkit.entity.TextDisplay
 import org.bukkit.util.Transformation
 import org.joml.Vector3f
 import java.awt.image.BufferedImage
+import kotlin.math.cos
+import kotlin.math.sin
 
 class Screen(
     val width: Int,
@@ -42,17 +44,29 @@ class Screen(
     }
 
     fun updateLocation(newPos: Location) {
-        // Move each pixel entity to its new position
-        for (index in pixels.indices) {
+        val pixelSize = 1.0 / 32.0
+
+        val halfW = width * pixelSize / 2.0
+
+        val yawRad = Math.toRadians(newPos.yaw.toDouble())
+        val c = cos(yawRad)
+        val s = sin(yawRad)
+
+        pixels.forEachIndexed { index, pixel ->
             val x = index % width
             val y = index / width
-            val pixel = pixels[index]
-            val newPixelPos = newPos.clone().add(
-                x / 32.0,
-                y / 32.0,
-                0.0
-            )
-            pixel.teleport(newPixelPos)
+
+            val localX = (x + 0.5) * pixelSize - halfW
+            val localZ = 0.0
+
+            val worldX =  localX * c - localZ * s
+            val worldZ =  localX * s + localZ * c
+
+            val target = newPos.clone().add(worldX, y / 32.0, worldZ)
+
+            pixel.teleport(target)
+            pixel.setRotation(newPos.yaw, 0f)
+            pixel.teleportDuration = 1
         }
 
         pos = newPos.clone()

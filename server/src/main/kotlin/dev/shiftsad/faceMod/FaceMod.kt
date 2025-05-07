@@ -6,6 +6,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerChatEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.plugin.messaging.PluginMessageListener
+import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 
 class FaceMod : JavaPlugin(), PluginMessageListener, Listener {
@@ -42,13 +43,20 @@ class FaceMod : JavaPlugin(), PluginMessageListener, Listener {
         val inputStream = message.inputStream()
         val image = ImageIO.read(inputStream)
 
+        val width = 16 * 4
+        val height = 9 * 4
+        val resizedImage = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+        val graphics = resizedImage.createGraphics()
+        graphics.drawImage(image, 0, 0, width, height, null)
+        graphics.dispose()
+
         if (screens[player] == null) {
-            val screen = Screen(16 * 5, 9 * 5, player.location, player.world)
+            val screen = Screen(width, height, player.location, player.world)
             screens[player] = screen
         }
 
         val screen = screens[player] ?: return
         screen.setFromImage(image)
-        screen.updateLocation(player.location.add(0.0, 1.0, 0.0))
+        screen.updateLocation(player.location.add(0.0, 2.0, 0.0))
     }
 }
