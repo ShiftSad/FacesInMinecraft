@@ -51,7 +51,7 @@ class FaceMod : JavaPlugin(), PluginMessageListener, Listener {
         graphics.dispose()
 
         if (screens[player] == null) {
-            val screen = Screen(width, height, player.location, player.world)
+            val screen = Screen(this, width, height, player.location, player.world)
             screens[player] = screen
         }
 

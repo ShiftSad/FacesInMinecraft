@@ -17,11 +17,8 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.command.CommandSource
 import net.minecraft.network.packet.c2s.common.CustomPayloadC2SPacket
 import net.minecraft.text.Text
-import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.Executors
 import javax.imageio.ImageIO
 

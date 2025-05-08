@@ -3,18 +3,22 @@ package dev.shiftsad.faceMod
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
+import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.World
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.TextDisplay
+import org.bukkit.plugin.Plugin
 import org.bukkit.util.Transformation
 import org.joml.Vector3f
 import java.awt.image.BufferedImage
+import java.util.concurrent.Executors
 import kotlin.math.cos
 import kotlin.math.sin
 
 class Screen(
+    private val plugin: Plugin,
     val width: Int,
     val height: Int,
     var pos: Location,
@@ -31,6 +35,63 @@ class Screen(
             0.0
         )
         spawnTextPixel(pixelPos, world)
+    }
+
+    private data class PixelColor(val idx: Int, val argb: Int)
+    private data class TeleportOp(val idx: Int, val target: Location, val yaw: Float)
+
+    private val executor = Executors.newSingleThreadExecutor()
+
+    /**
+     * This kicks off an async prepare, then a sync apply.
+     */
+    fun updateAsync(image: BufferedImage, newPos: Location) {
+        val posClone = newPos.clone()
+        val imgClone = BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB)
+        imgClone.createGraphics().drawImage(image, 0, 0, null)
+        imgClone.createGraphics().dispose()
+
+        executor.submit {
+            val argbs = IntArray(width * height)
+            val g = imgClone.createGraphics().apply {
+                drawImage(imgClone, 0, 0, width, height, null)
+                dispose()
+            }
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    argbs[y * width + x] = imgClone.getRGB(x, height - 1 - y)
+                }
+            }
+
+            val pixelSize = 1.0 / 32.0
+            val halfW = width * pixelSize / 2.0
+            val yawRad = Math.toRadians(posClone.yaw.toDouble())
+            val c = cos(yawRad)
+            val s = sin(yawRad)
+
+            val teleports = ArrayList<TeleportOp>(width * height)
+            for (idx in 0 until width * height) {
+                val x = idx % width
+                val y = idx / width
+                val localX = (x + 0.5) * pixelSize - halfW
+                val worldX = localX * c
+                val worldZ = localX * s
+                val target = posClone.clone().add(worldX, y * pixelSize, worldZ)
+                teleports += TeleportOp(idx, target, posClone.yaw)
+            }
+
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                for (i in argbs.indices) {
+                    pixels[i].setColor(argbs[i])
+                }
+                teleports.forEach { op ->
+                    val td = pixels[op.idx]
+                    td.teleport(op.target)
+                    td.setRotation(op.yaw, 0f)
+                    td.teleportDuration = 1
+                }
+            })
+        }
     }
 
     operator fun get(x: Int, y: Int): TextDisplay {
